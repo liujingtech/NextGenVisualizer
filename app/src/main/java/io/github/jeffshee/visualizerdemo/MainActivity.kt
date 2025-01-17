@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -20,6 +21,7 @@ import io.github.jeffshee.visualizer.painters.waveform.WfmAnalog
 import io.github.jeffshee.visualizer.utils.Preset
 import io.github.jeffshee.visualizer.utils.VisualizerHelper
 import io.github.jeffshee.visualizer.views.VisualizerView
+import java.security.AccessController.getContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -28,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bitmap: Bitmap
     private lateinit var circleBitmap: Bitmap
     private var current = 0
+    private var mPlayer: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,7 +78,11 @@ class MainActivity : AppCompatActivity() {
         bitmap = BitmapFactory.decodeResource(resources, R.drawable.chino512)
         circleBitmap = Icon.getCircledBitmap(bitmap)
 
-        helper = VisualizerHelper(0)
+        mPlayer = MediaPlayer.create(this, R.raw.a).apply {
+            isLooping = true
+            start()
+            helper = VisualizerHelper(0)
+        }
         val list = listOf(
             // Basic components
             Compose(
@@ -158,6 +165,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         helper.release()
+        mPlayer?.release()
         super.onDestroy()
     }
 }

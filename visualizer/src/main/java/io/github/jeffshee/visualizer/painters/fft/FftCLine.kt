@@ -14,10 +14,10 @@ class FftCLine(
         color = Color.WHITE;style = Paint.Style.STROKE;strokeWidth = 2f
     },
     //
-    var startHz: Int = 0,
+    var startHz: Int = 20,
     var endHz: Int = 2000,
     //
-    var num: Int = 64,
+    var num: Int = 128,
     var interpolator: String = "li",
     //
     var side: String = "a",
