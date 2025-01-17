@@ -1,0 +1,55 @@
+[versions]
+agp = "8.7.3"
+appcompatV7 = "28.0.0"
+coreTestingVersion = "2.2.0"
+kotlin = "2.0.21"
+coreKtx = "1.15.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+libpag = "4.3.54"
+lottie = "6.6.0"
+material = "1.12.0"
+ksp = "2.0.21-1.0.28"
+kapt = "1.8.0"
+theme = "Hmi3.5-2024.09.14.01"
+constraintlayout = "2.2.0"
+lifecycleLivedataKtx = "2.8.7"
+lifecycleViewmodelKtx = "2.8.7"
+fragmentKtx = "1.8.5"
+timber = "5.0.1"
+hilt = "2.51"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTestingVersion" }
+appcompat-v7 = { module = "com.android.support:appcompat-v7", version.ref = "appcompatV7" }
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
+libpag = { module = "com.tencent.tav:libpag", version.ref = "libpag" }
+lottie = { module = "com.airbnb.android:lottie", version.ref = "lottie" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+zui-theme = { module = "com.zeekr.zui-8295:theme", version.ref = "theme" }
+zui-lottie = { module = "com.zeekr.zui-8295:lottie", version.ref = "theme" }
+zui-common = { module = "com.zeekr.zui-8295:common", version.ref = "theme" }
+zui-dialog = { module = "com.zeekr.zui-8295:dialog", version.ref = "theme" }
+zui-component = { module = "com.zeekr.zui-8295:component", version.ref = "theme" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "lifecycleLivedataKtx" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtx" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+com-google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+org-jetbrains-kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kapt" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
