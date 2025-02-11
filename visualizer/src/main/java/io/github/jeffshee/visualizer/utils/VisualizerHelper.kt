@@ -1,10 +1,20 @@
 package io.github.jeffshee.visualizer.utils
 
+import android.content.Context
 import android.media.audiofx.Visualizer
 import android.os.Handler
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
 
-class VisualizerHelper(sessionId: Int) {
+class VisualizerHelper(val context: Context, sessionId: Int) {
 
     private val visualizer: Visualizer = Visualizer(sessionId)
     private val fftBuff: ByteArray
@@ -39,7 +49,66 @@ class VisualizerHelper(sessionId: Int) {
             val i = (k + 1) * 2
             fftM[k] = Math.hypot(fftBuff[i].toDouble(), fftBuff[i + 1].toDouble())
         }
+        // 将 fftM 的内容写入文件
+        writeFftMagnitudeToFile(fftM)
         return fftM
+    }
+
+    private val bufferSizeInBytes = .1 * 1024 // 缓冲区大小
+    private val buffer = StringBuilder()
+    private var currentBufferSize = 0
+    private val job = Job()
+    private val scope = CoroutineScope(Dispatchers.IO + job)
+
+    fun writeFftMagnitudeToFile(fftM: DoubleArray) {
+        scope.launch {
+            val directory = context.getExternalFilesDir("1")
+            val file = File(directory, "2.txt")
+            try {
+                // 如果文件不存在，则创建新文件
+                if (!file.exists()) {
+                    file.createNewFile()
+                }
+                // 将 fftM 数组内容转换为字符串
+                val data = fftM.joinToString(separator = ", ") { it.toString() } + "\n"
+                buffer.append(data)
+                flushBuffer(file)
+            } catch (e: IOException) {
+                Log.e("VisualizerHelper", "${directory?.absoluteFile} 写入文件失败: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun flushBuffer(file: File) {
+        try {
+            // 使用 BufferedWriter 追加模式写入文件
+            withContext(Dispatchers.IO) {
+                BufferedWriter(FileWriter(file, true)).buffered().use { writer ->
+                    writer.append(buffer)
+                }
+            }
+            // 清空缓冲区和重置当前缓冲区大小
+            buffer.setLength(0)
+            currentBufferSize = 0
+        } catch (e: IOException) {
+            Log.e("VisualizerHelper", "${file.absoluteFile} 写入文件失败: ${e.message}")
+        }
+    }
+
+    // 在对象销毁或需要强制写入时调用此方法
+    fun forceFlush() {
+        scope.launch {
+            if (buffer.isNotEmpty()) {
+                val directory = context.getExternalFilesDir("1")
+                val file = File(directory, "2.txt")
+                flushBuffer(file)
+            }
+        }
+    }
+
+    // 取消协程作用域，防止内存泄漏
+    fun cancelScope() {
+        job.cancel()
     }
 
     /**
