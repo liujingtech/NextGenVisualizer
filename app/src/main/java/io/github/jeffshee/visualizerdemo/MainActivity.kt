@@ -1,13 +1,18 @@
 package io.github.jeffshee.visualizerdemo
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Paint
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -24,8 +29,7 @@ import io.github.jeffshee.visualizer.views.VisualizerView
 import java.security.AccessController.getContext
 
 class MainActivity : AppCompatActivity() {
-
-    private lateinit var helper: VisualizerHelper
+    private var helper: VisualizerHelper? = null
     private lateinit var background: Bitmap
     private lateinit var bitmap: Bitmap
     private lateinit var circleBitmap: Bitmap
@@ -34,21 +38,25 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        hideSystemUI()
+//        hideSystemUI()
 
         setContentView(R.layout.activity_main)
+
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 0)
-        } else init()
+        } else {
+//            requestAudioFocus()
+//            findViewById<VisualizerView>(R.id.visual).postDelayed({
+                init()
+//            }, 300)
+        }
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         if (requestCode == 0 && grantResults[0] == 0) init()
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -56,21 +64,44 @@ class MainActivity : AppCompatActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        hideSystemUI()
+//        hideSystemUI()
     }
 
     private fun hideSystemUI() {
         val decorView = window.decorView
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            decorView.systemUiVisibility = (
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                            or View.SYSTEM_UI_FLAG_FULLSCREEN
-                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    )
+            decorView.systemUiVisibility =
+                (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
         }
+    }
+
+    var delayedFocusRequest: AudioFocusRequest? = null
+    fun requestAudioFocus(): Boolean {
+        val builder = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .setFlags(AudioAttributes.FLAG_LOW_LATENCY)
+            .build()
+
+        delayedFocusRequest = AudioFocusRequest
+            .Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(builder)
+            //            .setWillPauseWhenDucked(true)
+            .setOnAudioFocusChangeListener { it ->
+                if (it == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+//                    stopMusic()
+//                    requestAudioFocus()
+                    //                    mPlayer?.pause()
+                } else if (it == AudioManager.AUDIOFOCUS_GAIN) {
+                    //                    mPlayer?.start()
+                }
+            }
+            .build();
+        val manager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        return manager?.requestAudioFocus(delayedFocusRequest!!)
+            .let {
+                it == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+            }
     }
 
     private fun init() {
@@ -78,93 +109,78 @@ class MainActivity : AppCompatActivity() {
         bitmap = BitmapFactory.decodeResource(resources, R.drawable.chino512)
         circleBitmap = Icon.getCircledBitmap(bitmap)
 
-        mPlayer = MediaPlayer.create(this, R.raw.a).apply {
+        mPlayer = MediaPlayer.create(this, R.raw.c).apply {
             isLooping = true
             start()
-            helper = VisualizerHelper(0)
         }
-        val list = listOf(
-            // Basic components
-            Compose(
-                Move(WfmAnalog(), yR = -.3f),
-                Move(FftBar(), yR = -.1f),
-                Move(FftLine(), yR = .1f),
-                Move(FftWave(), yR = .3f),
-                Move(FftWaveRgb(), yR = .5f)
-            ),
-            Compose(
-                Move(FftBar(side = "b"), yR = -.3f),
-                Move(FftLine(side = "b"), yR = -.1f),
-                Move(FftWave(side = "b"), yR = .1f),
-                Move(FftWaveRgb(side = "b"), yR = .3f)
-            ),
-            Compose(
-                Move(FftBar(side = "ab"), yR = -.3f),
-                Move(FftLine(side = "ab"), yR = -.1f),
-                Move(FftWave(side = "ab"), yR = .1f),
-                Move(FftWaveRgb(side = "ab"), yR = .3f)
-            ),
-            // Basic components (Circle)
-            Compose(Move(FftCLine(), xR = -.3f), FftCWave(), Move(FftCWaveRgb(), xR = .3f)),
-            Compose(
-                Move(FftCLine(side = "b"), xR = -.3f),
-                FftCWave(side = "b"),
-                Move(FftCWaveRgb(side = "b"), xR = .3f)
-            ),
-            Compose(
-                Move(FftCLine(side = "ab"), xR = -.3f),
-                FftCWave(side = "ab"),
-                Move(FftCWaveRgb(side = "ab"), xR = .3f)
-            ),
-            //Blend
-            Blend(
-                FftLine().apply { paint.strokeWidth = 8f;paint.strokeCap = Paint.Cap.ROUND },
-                Gradient(preset = Gradient.LINEAR_HORIZONTAL)
-            ),
-            Blend(
-                FftLine().apply { paint.strokeWidth = 8f;paint.strokeCap = Paint.Cap.ROUND },
-                Gradient(preset = Gradient.LINEAR_VERTICAL, hsv = true)
-            ),
-            Blend(
-                FftLine().apply { paint.strokeWidth = 8f;paint.strokeCap = Paint.Cap.ROUND },
-                Gradient(preset = Gradient.LINEAR_VERTICAL_MIRROR, hsv = true)
-            ),
-            Blend(
-                FftCLine().apply { paint.strokeWidth = 8f;paint.strokeCap = Paint.Cap.ROUND },
-                Gradient(preset = Gradient.RADIAL)
-            ),
-            Blend(
-                FftCBar(side = "ab", gapX = 8f).apply { paint.style = Paint.Style.FILL },
-                Gradient(preset = Gradient.SWEEP, hsv = true)
-            ),
-            // Composition
-            Glitch(Beat(Preset.getPresetWithBitmap("cIcon", circleBitmap))),
-            Compose(
-                WfmAnalog().apply { paint.alpha = 150 },
-                Shake(Preset.getPresetWithBitmap("cWaveRgbIcon", circleBitmap)).apply {
-                    animX.duration = 1000
-                    animY.duration = 2000
-                }),
-            Compose(
-                Preset.getPresetWithBitmap("liveBg", background),
-                FftCLine().apply { paint.strokeWidth = 8f;paint.strokeCap = Paint.Cap.ROUND }
-            )
-        )
+        findViewById<VisualizerView>(R.id.visual).postDelayed({
+            mPlayer!!.stop()
+            finish()
+        }, 15000)
+        Log.e("aa"," mPlayer!!.audioSessionId:${ mPlayer!!.audioSessionId}")
+        helper = VisualizerHelper(applicationContext, mPlayer!!.audioSessionId)
+
+//        var count = 0
+//        do {
+//            try {
+//                helper = VisualizerHelper(applicationContext, 57)
+//            } catch (exception: Exception) {
+//                exception.printStackTrace()
+//                Log.e("a","initVisualizer Exception:${exception.message}")
+//            }
+//        } while (count++ < 1)
 
         findViewById<VisualizerView>(R.id.visual).apply {
-            setup(helper, list[current])
-            setOnLongClickListener {
-                if (current < list.lastIndex) current++ else current = 0
-                setup(helper, list[current])
-                true
-            }
+            setup(
+                helper!!, Compose(
+                    Move(
+                        CameraRotate(
+                            Rotate(
+                                FftCLine(
+                                    startHz = 0,
+                                    endHz = 2000,
+                                    endOffset = 5f,
+                                    radiusR = .37f,
+                                    ampR = .5f,
+                                    mirror = false,
+                                    power = true,
+                                    interpolator = "li",
+                                    num = 128,
+                                ),
+                                pxR = .5f,
+                                pyR = .5f,
+                            ), rotateX = 76f
+                        ), CameraRotate(
+                            Rotate(
+                                FftCSpaceLine(
+                                    startHz = 0,
+                                    endHz = 2000,
+                                    radiusR = .37f,
+                                    ampR = 1.5f,
+                                    mirror = false,
+                                    power = true,
+                                    startOffset = 7f,
+                                    endOffset = 3f,
+                                    interpolator = "li",
+                                    num = 128,
+                                ),
+                                pxR = .5f,
+                                pyR = .5f,
+                            ), rotateX = 76f
+                        ), Beat(
+                            onBeat = {},
+                        ), yR = 0.03f
+                    ),
+                )
+            )
         }
 
         Toast.makeText(this, "Try long-click \ud83d\ude09", Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroy() {
-        helper.release()
+        helper?.forceFlush()
+        helper?.release()
         mPlayer?.release()
         super.onDestroy()
     }
