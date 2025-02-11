@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "io.github.jeffshee.visualizerdemo"
-        minSdk = 32
+        minSdk = 31
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -42,4 +42,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")// 可根据实际情况选择合适版本
 }
